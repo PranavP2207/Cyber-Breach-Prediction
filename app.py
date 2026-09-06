@@ -170,9 +170,9 @@ for k, v in DEFAULTS.items():
 # 4. Model Loading with Cache Invalidation
 # ------------------------------------------------------------------
 @st.cache_resource
-def load_model(model_mtime: float):
-    """Load trained pipeline from disk with automatic cache invalidation."""
-    return joblib.load("model/cyber_model.joblib")
+def load_model(_model_path: str = "model/cyber_model.joblib"):
+    """Load trained pipeline from disk with Streamlit's resource caching."""
+    return joblib.load(_model_path)
 
 
 # ------------------------------------------------------------------
@@ -907,7 +907,7 @@ if not os.path.exists(MODEL_PATH):
     st.stop()
 
 try:
-    model = load_model(os.path.getmtime(MODEL_PATH))
+    model = load_model(MODEL_PATH)
     breach_prob = float(model.predict_proba(input_df)[0, 1])
 except Exception as e:
     st.error(f"Prediction Pipeline Error: {e}")

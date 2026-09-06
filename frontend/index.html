@@ -388,6 +388,15 @@
 </div>
 
 <script>
+  /* ---------------- cached DOM references ---------------- */
+  const elements = {
+    resultPct: document.getElementById('resultPct'),
+    resultBadge: document.getElementById('resultBadge'),
+    gaugeFill: document.getElementById('gaugeFill'),
+    resultNote: document.getElementById('resultNote'),
+    killchain: document.getElementById('killchain')
+  };
+
   /* ---------------- tab switching ---------------- */
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -406,7 +415,7 @@
     { name: "Persistence", rate: 73.2 },
     { name: "Impact", rate: 93.8 },
   ];
-  const kcEl = document.getElementById('killchain');
+
   KC_STAGES.forEach((s, i) => {
     const div = document.createElement('div');
     div.className = 'kc-stage';
@@ -417,7 +426,7 @@
       <div class="kc-bar"><span style="width:${s.rate}%"></span></div>
       <div class="kc-caption">breach success rate</div>
     `;
-    kcEl.appendChild(div);
+    elements.killchain.appendChild(div);
   });
 
   /* ---------------- calculator model ---------------- */
@@ -435,13 +444,13 @@
   };
   const DEF_W = { mfa: -0.40, edr: -0.20, firewall: -0.03 };
 
-  function sigmoid(x) { return 1 / (1 + Math.exp(-x)); }
-  function val(id) { return document.getElementById(id).value; }
-  function checked(id) { return document.getElementById(id).checked; }
-  function num(id) { return parseFloat(document.getElementById(id).value) || 0; }
+  const sigmoid = x => 1 / (1 + Math.exp(-x));
+  const val = id => document.getElementById(id).value;
+  const checked = id => document.getElementById(id).checked;
+  const num = id => parseFloat(document.getElementById(id).value) || 0;
 
   function calc() {
-    let logit = STAGE_LOGIT[val('stage')];
+    let logit = STAGE_LOGIT[val('stage')] || 0;
     logit += COMPANY_LOGIT[val('companysize')] || 0;
 
     for (const key of Object.keys(FLAG_W)) {
@@ -463,15 +472,13 @@
     logit += ((respond - 5) / (221 - 5)) * 0.3;
     logit += (Math.sqrt(exfil) / Math.sqrt(220)) * 0.4;
 
-    let p = sigmoid(logit);
-    p = Math.min(Math.max(p, 0.01), 0.99);
-
+    const p = Math.min(Math.max(sigmoid(logit), 0.01), 0.99);
     renderResult(p);
   }
 
   function renderResult(p) {
     const pct = (p * 100).toFixed(1);
-    document.getElementById('resultPct').textContent = pct + '%';
+    elements.resultPct.textContent = pct + '%';
 
     let label, color, note;
     if (p < 0.25) { label = 'LOW'; color = 'var(--low)'; note = 'Indicators suggest containment is likely with standard monitoring.'; }
@@ -479,18 +486,11 @@
     else if (p < 0.75) { label = 'HIGH'; color = 'var(--high)'; note = 'Escalate: isolate the affected host and verify credential integrity.'; }
     else { label = 'CRITICAL'; color = 'var(--crit)'; note = 'Immediate incident response: isolate, reset credentials, engage IR team.'; }
 
-    const badge = document.getElementById('resultBadge');
-    badge.textContent = label + ' RISK';
-    badge.style.background = color + '22';
-    badge.style.color = color;
-    badge.style.border = '1px solid ' + color;
-    document.getElementById('resultPct').style.color = color;
-
-    const fill = document.getElementById('gaugeFill');
-    fill.style.width = pct + '%';
-    fill.style.background = color;
-
-    document.getElementById('resultNote').textContent = note;
+    elements.resultBadge.textContent = label + ' RISK';
+    elements.resultBadge.style.cssText = `background: ${color}22; color: ${color}; border: 1px solid ${color}`;
+    elements.resultPct.style.color = color;
+    elements.gaugeFill.style.cssText = `width: ${pct}%; background: ${color}`;
+    elements.resultNote.textContent = note;
   }
 
   /* ---------------- presets ---------------- */
@@ -520,12 +520,11 @@
   };
 
   function applyState(state) {
-    for (const key of Object.keys(state)) {
+    Object.entries(state).forEach(([key, value]) => {
       const el = document.getElementById(key);
-      if (!el) continue;
-      if (el.type === 'checkbox') el.checked = state[key];
-      else el.value = state[key];
-    }
+      if (!el) return;
+      el.type === 'checkbox' ? (el.checked = value) : (el.value = value);
+    });
     calc();
   }
 

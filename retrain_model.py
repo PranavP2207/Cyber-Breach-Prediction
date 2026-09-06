@@ -5,7 +5,7 @@ Generates model/cyber_model.joblib and prints verified metrics.
 
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.pipeline import Pipeline
@@ -69,9 +69,10 @@ print(f"  Train: {X_train.shape[0]}  Test: {X_test.shape[0]}")
 # -- 5. Preprocessing pipeline -------------------------------------
 preprocessor = ColumnTransformer(
     transformers=[
-        ("cat", OneHotEncoder(handle_unknown="ignore", sparse_output=False), CATEGORICAL_FEATURES),
+        ("cat", OneHotEncoder(handle_unknown="ignore", sparse_output=True), CATEGORICAL_FEATURES),
     ],
     remainder="passthrough",
+    sparse_threshold=0.3,
 )
 
 # -- 6. Logistic Regression baseline -------------------------------
@@ -97,6 +98,7 @@ rf_pipe = Pipeline([
         min_samples_leaf=5,
         random_state=42,
         n_jobs=-1,
+        class_weight='balanced',  # Handle class imbalance
     )),
 ])
 rf_pipe.fit(X_train, y_train)
@@ -113,6 +115,11 @@ print(f"  ROC-AUC:   {auc:.4f}")
 print(f"\n  Confusion Matrix:\n{confusion_matrix(y_test, rf_pred)}")
 print(f"\n  Classification Report:\n{classification_report(y_test, rf_pred)}")
 
+# -- 7b. Cross-validation for robustness ----------------------------
+print("\n-- 5-Fold Cross-Validation --")
+cv_scores = cross_val_score(rf_pipe, X_train, y_train, cv=5, scoring='roc_auc', n_jobs=-1)
+print(f"  CV ROC-AUC: {cv_scores.mean():.4f} (+/- {cv_scores.std() * 2:.4f})")
+
 # -- 8. Feature importance -----------------------------------------
 print("\n-- Feature Importances (Random Forest) --")
 rf_model = rf_pipe.named_steps["classifier"]
@@ -124,9 +131,9 @@ sorted_idx = np.argsort(importances)[::-1]
 for i in sorted_idx:
     print(f"  {all_feature_names[i]:30s} {importances[i]:.4f}")
 
-# -- 9. Save model -------------------------------------------------
+# -- 9. Save model with compression --------------------------------
 os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
-joblib.dump(rf_pipe, MODEL_PATH)
+joblib.dump(rf_pipe, MODEL_PATH, compress=3)
 print(f"\nModel saved to {MODEL_PATH} ({os.path.getsize(MODEL_PATH) / 1e6:.1f} MB)")
 
 # -- 10. Smoke test ------------------------------------------------
