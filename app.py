@@ -1,5 +1,5 @@
 """
-Cyber Breach Prediction Across the Enterprise Kill Chain
+Cyber Breach Prediction
 Enterprise SOC Dashboard & Decision-Support System
 
 Machine learning classification pipeline predicting the probability that an
@@ -18,7 +18,7 @@ import streamlit as st
 # ------------------------------------------------------------------
 st.set_page_config(
     page_title="Cyber Breach Prediction | Enterprise SOC Dashboard",
-    page_icon="🛡️",
+    page_icon="shield",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
@@ -582,11 +582,11 @@ st.markdown(
     """
     <div class="soc-header">
         <div>
-            <div class="soc-header-title">🛡️ Cyber Breach Prediction</div>
+            <div class="soc-header-title">Cyber Breach Prediction</div>
             <div class="soc-header-sub">Enterprise Kill Chain Attack Success Predictor</div>
         </div>
         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <span class="status-pill pill-green">● MODEL ONLINE</span>
+            <span class="status-pill pill-green">MODEL ONLINE</span>
             <span class="status-pill">RF CLASSIFIER</span>
             <span class="status-pill">v1.0 (16F)</span>
         </div>
