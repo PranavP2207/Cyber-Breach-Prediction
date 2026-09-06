@@ -252,9 +252,6 @@ st.markdown(
         border-radius: 12px;
         padding: 20px 28px;
         margin-bottom: 24px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
     }
     .soc-header-title {
         font-size: 1.6rem;
@@ -268,44 +265,36 @@ st.markdown(
         font-weight: 500;
         margin-top: 4px;
     }
-    .status-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 14px;
-        border-radius: 9999px;
-        font-size: 0.73rem;
-        font-weight: 600;
-        font-family: 'JetBrains Mono', monospace;
-        background: rgba(30, 41, 59, 0.85);
-        border: 1px solid rgba(148, 163, 184, 0.18);
-        color: #cbd5e1;
-    }
-    .pill-green {
-        color: #10b981;
-        border-color: rgba(16, 185, 129, 0.35);
-        background: rgba(16, 185, 129, 0.10);
-    }
 
     /* Tabs */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        background: transparent;
-    }
-    .stTabs [data-baseweb="tab"] {
-        height: 48px;
-        padding: 0 24px;
+        gap: 4px;
         background: #0f172a;
         border: 1px solid rgba(148, 163, 184, 0.12);
-        border-radius: 10px;
+        border-radius: 12px;
+        padding: 6px;
+        margin-bottom: 24px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 44px;
+        padding: 0 28px;
+        background: transparent;
+        border: none;
+        border-radius: 8px;
         font-weight: 600;
-        color: #94a3b8;
-        font-size: 0.9rem;
+        color: #64748b;
+        font-size: 0.92rem;
+        transition: all 0.2s ease;
+    }
+    .stTabs [data-baseweb="tab"]:hover {
+        color: #cbd5e1;
+        background: rgba(148, 163, 184, 0.06);
     }
     .stTabs [aria-selected="true"] {
-        background: rgba(56, 189, 248, 0.12);
-        border: 1px solid #38bdf8;
+        background: rgba(56, 189, 248, 0.15);
         color: #38bdf8;
+        font-weight: 700;
+        box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.3);
     }
 
     /* Cards */
@@ -584,11 +573,6 @@ st.markdown(
         <div>
             <div class="soc-header-title">Cyber Breach Prediction</div>
             <div class="soc-header-sub">Enterprise Kill Chain Attack Success Predictor</div>
-        </div>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <span class="status-pill pill-green">MODEL ONLINE</span>
-            <span class="status-pill">RF CLASSIFIER</span>
-            <span class="status-pill">v1.0 (16F)</span>
         </div>
     </div>
     """,
