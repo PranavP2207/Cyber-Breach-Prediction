@@ -37,23 +37,65 @@ FEATURE_COLUMNS = [
     "Firewall", "MFA", "EDR", "CVSS_Score", "Patch_Age_Days",
 ]
 
+# Default values for the 16 features
+DEFAULTS = {
+    "Attack_Stage": "Execution",
+    "Company_Size": "Medium",
+    "Lateral_Movement": False,
+    "Privilege_Escalation": False,
+    "Persistence": False,
+    "Credential_Stolen": False,
+    "Data_Exfiltration_GB": 0.0,
+    "Data_Encrypted": False,
+    "Phishing_Click": False,
+    "Detection_Time_Min": 100,
+    "Response_Time_Min": 40,
+    "Firewall": True,
+    "MFA": True,
+    "EDR": True,
+    "CVSS_Score": 5.0,
+    "Patch_Age_Days": 45,
+}
+
 # Two demo scenarios, used to pre-fill the form for a quick presentation.
 PRESETS = {
     "-- Manual entry --": None,
-    "Case A: Contained attack (Reconnaissance, hardened defenses)": dict(
-        Attack_Stage="Reconnaissance", Company_Size="Large",
-        Lateral_Movement=0, Privilege_Escalation=0, Persistence=0,
-        Credential_Stolen=0, Data_Exfiltration_GB=0.0, Data_Encrypted=0,
-        Phishing_Click=0, Detection_Time_Min=25, Response_Time_Min=10,
-        Firewall=1, MFA=1, EDR=1, CVSS_Score=3.0, Patch_Age_Days=10,
-    ),
-    "Case B: Critical breach (Impact stage, weak defenses)": dict(
-        Attack_Stage="Impact", Company_Size="Small",
-        Lateral_Movement=1, Privilege_Escalation=1, Persistence=1,
-        Credential_Stolen=1, Data_Exfiltration_GB=85.0, Data_Encrypted=1,
-        Phishing_Click=1, Detection_Time_Min=210, Response_Time_Min=150,
-        Firewall=0, MFA=0, EDR=0, CVSS_Score=9.4, Patch_Age_Days=160,
-    ),
+    "Case A: Contained attack (Reconnaissance, hardened defenses)": {
+        "Attack_Stage": "Reconnaissance",
+        "Company_Size": "Large",
+        "Lateral_Movement": False,
+        "Privilege_Escalation": False,
+        "Persistence": False,
+        "Credential_Stolen": False,
+        "Data_Exfiltration_GB": 0.0,
+        "Data_Encrypted": False,
+        "Phishing_Click": False,
+        "Detection_Time_Min": 25,
+        "Response_Time_Min": 10,
+        "Firewall": True,
+        "MFA": True,
+        "EDR": True,
+        "CVSS_Score": 3.0,
+        "Patch_Age_Days": 10,
+    },
+    "Case B: Critical breach (Impact stage, weak defenses)": {
+        "Attack_Stage": "Impact",
+        "Company_Size": "Small",
+        "Lateral_Movement": True,
+        "Privilege_Escalation": True,
+        "Persistence": True,
+        "Credential_Stolen": True,
+        "Data_Exfiltration_GB": 85.0,
+        "Data_Encrypted": True,
+        "Phishing_Click": True,
+        "Detection_Time_Min": 210,
+        "Response_Time_Min": 150,
+        "Firewall": False,
+        "MFA": False,
+        "EDR": False,
+        "CVSS_Score": 9.4,
+        "Patch_Age_Days": 160,
+    },
 }
 
 CATEGORY_OPTIONS = {
@@ -61,6 +103,20 @@ CATEGORY_OPTIONS = {
                       "Persistence", "Impact"],
     "Company_Size": ["Small", "Medium", "Large"],
 }
+
+
+def on_scenario_change():
+    """Callback to update widget states when a preset scenario is chosen."""
+    scenario = st.session_state.get("scenario_selector")
+    if scenario and scenario in PRESETS and PRESETS[scenario] is not None:
+        for k, v in PRESETS[scenario].items():
+            st.session_state[k] = v
+
+
+# Initialize session state with defaults on first run
+for k, v in DEFAULTS.items():
+    if k not in st.session_state:
+        st.session_state[k] = v
 
 
 @st.cache_resource
@@ -79,22 +135,6 @@ def risk_badge(prob: float):
         return "HIGH", "#e67e22"
     else:
         return "CRITICAL", "#e74c3c"
-
-
-def selectbox_from_preset(label, key, preset, default_index=0):
-    options = CATEGORY_OPTIONS[key]
-    index = options.index(preset[key]) if preset and key in preset else default_index
-    return st.selectbox(label, options, index=index, key=key)
-
-
-def toggle_from_preset(label, key, preset, default=False):
-    value = bool(preset[key]) if preset and key in preset else default
-    return int(st.toggle(label, value=value, key=key))
-
-
-def number_from_preset(label, key, preset, default, **kwargs):
-    value = preset[key] if preset and key in preset else default
-    return st.number_input(label, value=float(value) if isinstance(default, float) else int(value), key=key, **kwargs)
 
 
 # ------------------------------------------------------------------
@@ -121,8 +161,12 @@ with st.expander("About this model", expanded=False):
         """
     )
 
-scenario = st.selectbox("Quick scenario (optional)", list(PRESETS.keys()))
-preset = PRESETS[scenario]
+st.selectbox(
+    "Quick scenario (optional)",
+    list(PRESETS.keys()),
+    key="scenario_selector",
+    on_change=on_scenario_change,
+)
 st.divider()
 
 col1, col2 = st.columns(2)
@@ -132,28 +176,28 @@ col1, col2 = st.columns(2)
 # ------------------------------------------------------------------
 with col1:
     st.subheader("Defenses & Vulnerability")
-    company_size = selectbox_from_preset("Company Size", "Company_Size", preset)
-    firewall = toggle_from_preset("Firewall active", "Firewall", preset, True)
-    mfa = toggle_from_preset("Multi-Factor Authentication enforced", "MFA", preset, True)
-    edr = toggle_from_preset("EDR deployed", "EDR", preset, True)
-    cvss_score = number_from_preset("Max CVSS Score of open vulns (0-10)", "CVSS_Score", preset, 5.0, min_value=0.0, max_value=10.0, step=0.1)
-    patch_age = number_from_preset("Patch Age (days)", "Patch_Age_Days", preset, 45, min_value=0, max_value=365)
+    company_size = st.selectbox("Company Size", CATEGORY_OPTIONS["Company_Size"], key="Company_Size")
+    firewall = int(st.toggle("Firewall active", key="Firewall"))
+    mfa = int(st.toggle("Multi-Factor Authentication enforced", key="MFA"))
+    edr = int(st.toggle("EDR deployed", key="EDR"))
+    cvss_score = float(st.number_input("Max CVSS Score of open vulns (0-10)", min_value=0.0, max_value=10.0, step=0.1, key="CVSS_Score"))
+    patch_age = int(st.number_input("Patch Age (days)", min_value=0, max_value=365, key="Patch_Age_Days"))
 
 # ------------------------------------------------------------------
 # Column 2: Kill Chain Telemetry & Response
 # ------------------------------------------------------------------
 with col2:
     st.subheader("Kill Chain Telemetry & Response")
-    attack_stage = selectbox_from_preset("Furthest Kill Chain Stage Reached", "Attack_Stage", preset)
-    phishing_click = toggle_from_preset("Phishing link clicked", "Phishing_Click", preset, False)
-    credential_stolen = toggle_from_preset("Credentials stolen", "Credential_Stolen", preset, False)
-    privilege_escalation = toggle_from_preset("Privilege escalation observed", "Privilege_Escalation", preset, False)
-    lateral_movement = toggle_from_preset("Lateral movement observed", "Lateral_Movement", preset, False)
-    persistence = toggle_from_preset("Persistence mechanism established", "Persistence", preset, False)
-    data_encrypted = toggle_from_preset("Data encrypted by attacker (ransomware)", "Data_Encrypted", preset, False)
-    data_exfil = number_from_preset("Data Exfiltrated so far (GB)", "Data_Exfiltration_GB", preset, 0.0, min_value=0.0, max_value=500.0, step=0.1)
-    detection_time = number_from_preset("Detection Time (minutes)", "Detection_Time_Min", preset, 100, min_value=0, max_value=500)
-    response_time = number_from_preset("Response Time (minutes)", "Response_Time_Min", preset, 40, min_value=0, max_value=500)
+    attack_stage = st.selectbox("Furthest Kill Chain Stage Reached", CATEGORY_OPTIONS["Attack_Stage"], key="Attack_Stage")
+    phishing_click = int(st.toggle("Phishing link clicked", key="Phishing_Click"))
+    credential_stolen = int(st.toggle("Credentials stolen", key="Credential_Stolen"))
+    privilege_escalation = int(st.toggle("Privilege escalation observed", key="Privilege_Escalation"))
+    lateral_movement = int(st.toggle("Lateral movement observed", key="Lateral_Movement"))
+    persistence = int(st.toggle("Persistence mechanism established", key="Persistence"))
+    data_encrypted = int(st.toggle("Data encrypted by attacker (ransomware)", key="Data_Encrypted"))
+    data_exfil = float(st.number_input("Data Exfiltrated so far (GB)", min_value=0.0, max_value=500.0, step=0.1, key="Data_Exfiltration_GB"))
+    detection_time = float(st.number_input("Detection Time (minutes)", min_value=0, max_value=500, key="Detection_Time_Min"))
+    response_time = float(st.number_input("Response Time (minutes)", min_value=0, max_value=500, key="Response_Time_Min"))
 
 st.divider()
 
@@ -161,15 +205,22 @@ st.divider()
 # Build the input row and predict
 # ------------------------------------------------------------------
 row = {
-    "Attack_Stage": attack_stage, "Company_Size": company_size,
+    "Attack_Stage": attack_stage,
+    "Company_Size": company_size,
     "Lateral_Movement": lateral_movement,
     "Privilege_Escalation": privilege_escalation,
-    "Persistence": persistence, "Credential_Stolen": credential_stolen,
-    "Data_Exfiltration_GB": data_exfil, "Data_Encrypted": data_encrypted,
+    "Persistence": persistence,
+    "Credential_Stolen": credential_stolen,
+    "Data_Exfiltration_GB": data_exfil,
+    "Data_Encrypted": data_encrypted,
     "Phishing_Click": phishing_click,
-    "Detection_Time_Min": detection_time, "Response_Time_Min": response_time,
-    "Firewall": firewall, "MFA": mfa, "EDR": edr,
-    "CVSS_Score": cvss_score, "Patch_Age_Days": patch_age,
+    "Detection_Time_Min": detection_time,
+    "Response_Time_Min": response_time,
+    "Firewall": firewall,
+    "MFA": mfa,
+    "EDR": edr,
+    "CVSS_Score": cvss_score,
+    "Patch_Age_Days": patch_age,
 }
 
 input_df = pd.DataFrame([row], columns=FEATURE_COLUMNS)
