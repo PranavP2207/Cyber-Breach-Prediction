@@ -2,10 +2,6 @@
 
 **Using Machine Learning**
 
-> 3rd Year B.Tech — Department of Information Technology
-> A. P. Shah Institute of Technology (APSIT), Thane
-> Mini Project / AIML Lab Review — September 7, 2026
-
 ---
 
 ## Overview
@@ -95,17 +91,6 @@ Use the **"Quick scenario"** dropdown at the top of the dashboard:
 - **Streamlit** — interactive dashboard
 - **joblib** — model persistence
 - **HTML / CSS / JS** — standalone prototype
-
----
-
-## Deploying to Streamlit Community Cloud
-
-1. Push this folder to a **GitHub repository**
-2. Go to [share.streamlit.io](https://share.streamlit.io)
-3. Connect your repo, set `app.py` as the main file
-4. Deploy — Streamlit Cloud will install from `requirements.txt` automatically
-
-> **Note:** `cyber_model.joblib` is ~25 MB. GitHub supports files up to 100 MB, so it will work. If you hit issues, use [Git LFS](https://git-lfs.github.com/).
 
 ---
 
