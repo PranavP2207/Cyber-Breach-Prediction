@@ -598,7 +598,7 @@ st.markdown(
 # ------------------------------------------------------------------
 # 8. Main Tabs Structure
 # ------------------------------------------------------------------
-tab_predictor, tab_info = st.tabs(["🎯 Predictor", "📊 Model Info"])
+tab_predictor, tab_info = st.tabs(["Predictor", "Model Info"])
 
 # ==================================================================
 # TAB 1: PREDICTOR (Interactive Model)
@@ -606,7 +606,7 @@ tab_predictor, tab_info = st.tabs(["🎯 Predictor", "📊 Model Info"])
 with tab_predictor:
 
     # Scenario Selection
-    st.markdown("### ⚡ Scenario Simulation")
+    st.markdown("### Scenario Simulation")
     st.markdown("Load predefined threat scenarios or enter custom telemetry below.")
 
     st.selectbox(
@@ -623,7 +623,7 @@ with tab_predictor:
     col_left, col_right = st.columns(2)
 
     with col_left:
-        st.markdown("#### 🛡️ Defenses & Vulnerability Posture")
+        st.markdown("#### Defenses & Vulnerability Posture")
 
         company_size = st.selectbox(
             "Enterprise Company Size",
@@ -655,7 +655,7 @@ with tab_predictor:
         ))
 
     with col_right:
-        st.markdown("#### 🔥 Kill Chain Telemetry & Response")
+        st.markdown("#### Kill Chain Telemetry & Response")
 
         attack_stage = st.selectbox(
             "Furthest Kill Chain Stage Reached",
@@ -845,7 +845,7 @@ with tab_predictor:
         st.markdown(
             f"""
 <div class="soc-card">
-    <div class="soc-card-title">🔥 Behavioral Threat Indicators</div>
+    <div class="soc-card-title">Behavioral Threat Indicators</div>
     <table class="soc-table">
         <thead><tr><th>Indicator</th><th>Status</th></tr></thead>
         <tbody>
@@ -865,7 +865,7 @@ with tab_predictor:
         st.markdown(
             f"""
 <div class="soc-card">
-    <div class="soc-card-title">🛡️ Defensive Posture</div>
+    <div class="soc-card-title">Defensive Posture</div>
     <table class="soc-table">
         <thead><tr><th>Control</th><th>Status</th></tr></thead>
         <tbody>
@@ -921,7 +921,7 @@ with tab_info:
     col_arch1, col_arch2 = st.columns(2)
 
     with col_arch1:
-        st.markdown("#### 🏗️ Model Architecture")
+        st.markdown("#### Model Architecture")
         st.markdown(
             """
 <div class="soc-card">
@@ -936,7 +936,7 @@ with tab_info:
             unsafe_allow_html=True,
         )
 
-        st.markdown("#### 📊 Data Pipeline")
+        st.markdown("#### Data Pipeline")
         st.markdown(
             """
 <div class="soc-card">
@@ -955,7 +955,7 @@ with tab_info:
         )
 
     with col_arch2:
-        st.markdown("#### 🎯 Feature Importance")
+        st.markdown("#### Feature Importance")
         st.markdown(
             """
 <div class="soc-card">
@@ -997,7 +997,7 @@ with tab_info:
             unsafe_allow_html=True,
         )
 
-        st.markdown("#### ⚠️ Data Leakage Prevention")
+        st.markdown("#### Data Leakage Prevention")
         st.markdown(
             """
 <div class="soc-card">
@@ -1021,7 +1021,7 @@ with tab_info:
     st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
 
     # Tech Stack
-    st.markdown("#### 🛠️ Technology Stack")
+    st.markdown("#### Technology Stack")
     st.markdown(
         """
 <div class="soc-card">
@@ -1045,9 +1045,9 @@ st.markdown(
     """
     <div class="soc-footer">
         <div style="font-weight: 700; color: #94a3b8; margin-bottom: 6px;">
-            Cyber Breach Prediction Across the Enterprise Kill Chain
+            Cyber Breach Prediction
         </div>
-        <div>APSIT · Department of Information Technology · Academic Research Project</div>
+        <div>Enterprise SOC Decision Support System</div>
     </div>
     """,
     unsafe_allow_html=True,
