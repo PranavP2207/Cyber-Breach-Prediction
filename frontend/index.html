@@ -194,12 +194,12 @@
       </div>
       <div class="stat-tile">
         <div class="label">Test Accuracy</div>
-        <div class="value">86.4%</div>
+        <div class="value">86.2%</div>
         <div class="foot">Random Forest, held-out 20% split</div>
       </div>
       <div class="stat-tile">
         <div class="label">ROC-AUC</div>
-        <div class="value">0.93</div>
+        <div class="value">0.94</div>
         <div class="foot">F1-score 0.77 on the breach class</div>
       </div>
     </div>
@@ -234,13 +234,13 @@
       <div class="pl-node">
         <div class="pl-tag">02 · CLEAN</div>
         <div class="pl-title">Data cleaning</div>
-        <div class="pl-detail">Drop 500 duplicates · remove 7 post-breach leakage columns · impute Compliance &amp; Detection_Time_Min</div>
+        <div class="pl-detail">Drop 500 duplicates &middot; remove 7 post-breach leakage columns &middot; impute Detection_Time_Min</div>
       </div>
-      <div class="pl-arrow">↓</div>
+      <div class="pl-arrow">&darr;</div>
       <div class="pl-node">
-        <div class="pl-tag">03 · TRANSFORM</div>
+        <div class="pl-tag">03 &middot; TRANSFORM</div>
         <div class="pl-title">Feature engineering</div>
-        <div class="pl-detail">One-hot encode 11 categorical fields · pass through 29 numeric fields → 40 model features</div>
+        <div class="pl-detail">One-hot encode 2 categorical fields (Attack_Stage, Company_Size) &middot; pass through 14 numeric fields &rarr; 16 model features</div>
       </div>
       <div class="pl-arrow">↓</div>
       <div class="pl-node">
@@ -285,8 +285,8 @@
     <h2 class="section-title">Quick breach-risk assessment</h2>
     <p class="section-sub">
       Enter what's known about an in-progress intrusion. This runs entirely in your
-      browser as a lightweight approximation of the trained model's key drivers —
-      for the full 40-feature Random Forest, use the Streamlit dashboard.
+      browser as a lightweight approximation of the trained model's key drivers &mdash;
+      for the full 16-feature Random Forest, use the Streamlit dashboard.
     </p>
 
     <div class="preset-row">
@@ -298,7 +298,34 @@
     <div class="calc-grid">
       <div>
         <fieldset>
-          <legend>Kill chain stage &amp; signals</legend>
+          <legend>Defenses &amp; Vulnerability</legend>
+          <div class="field-grid" style="margin-bottom:14px;">
+            <div class="field">
+              <label for="companysize">Company size</label>
+              <select id="companysize" onchange="calc()">
+                <option value="Small">Small</option>
+                <option value="Medium" selected>Medium</option>
+                <option value="Large">Large</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="cvss">Max CVSS score (0&ndash;10)</label>
+              <input type="number" id="cvss" value="5" min="0" max="10" step="0.1" oninput="calc()">
+            </div>
+            <div class="field">
+              <label for="patchage">Patch age (days)</label>
+              <input type="number" id="patchage" value="45" min="0" max="365" oninput="calc()">
+            </div>
+          </div>
+          <div class="toggle-grid">
+            <div class="toggle"><label for="firewall">Firewall active</label><div class="switch"><input type="checkbox" id="firewall" checked onchange="calc()"><span class="slider"></span></div></div>
+            <div class="toggle"><label for="mfa">MFA enforced</label><div class="switch"><input type="checkbox" id="mfa" checked onchange="calc()"><span class="slider"></span></div></div>
+            <div class="toggle"><label for="edr">EDR deployed</label><div class="switch"><input type="checkbox" id="edr" checked onchange="calc()"><span class="slider"></span></div></div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Kill-chain telemetry &amp; response</legend>
           <div class="field-grid" style="margin-bottom:14px;">
             <div class="field">
               <label for="stage">Furthest stage reached</label>
@@ -311,12 +338,16 @@
               </select>
             </div>
             <div class="field">
-              <label for="complexity">Attack complexity</label>
-              <select id="complexity" onchange="calc()">
-                <option value="Basic">Basic</option>
-                <option value="Intermediate" selected>Intermediate</option>
-                <option value="Advanced">Advanced</option>
-              </select>
+              <label for="exfil">Data exfiltrated so far (GB)</label>
+              <input type="number" id="exfil" value="0" min="0" max="300" oninput="calc()">
+            </div>
+            <div class="field">
+              <label for="detect">Detection time (min)</label>
+              <input type="number" id="detect" value="100" min="16" max="300" oninput="calc()">
+            </div>
+            <div class="field">
+              <label for="respond">Response time (min)</label>
+              <input type="number" id="respond" value="40" min="5" max="250" oninput="calc()">
             </div>
           </div>
           <div class="toggle-grid">
@@ -326,71 +357,6 @@
             <div class="toggle"><label for="lateral">Lateral movement</label><div class="switch"><input type="checkbox" id="lateral" onchange="calc()"><span class="slider"></span></div></div>
             <div class="toggle"><label for="persistence">Persistence established</label><div class="switch"><input type="checkbox" id="persistence" onchange="calc()"><span class="slider"></span></div></div>
             <div class="toggle"><label for="encrypted">Data encrypted (ransomware)</label><div class="switch"><input type="checkbox" id="encrypted" onchange="calc()"><span class="slider"></span></div></div>
-            <div class="toggle"><label for="zeroday">Zero-day exploit involved</label><div class="switch"><input type="checkbox" id="zeroday" onchange="calc()"><span class="slider"></span></div></div>
-            <div class="toggle"><label for="internet">Asset internet-exposed</label><div class="switch"><input type="checkbox" id="internet" onchange="calc()"><span class="slider"></span></div></div>
-          </div>
-        </fieldset>
-
-        <fieldset>
-          <legend>Defensive posture</legend>
-          <div class="toggle-grid" style="margin-bottom:14px;">
-            <div class="toggle"><label for="mfa">MFA enforced</label><div class="switch"><input type="checkbox" id="mfa" checked onchange="calc()"><span class="slider"></span></div></div>
-            <div class="toggle"><label for="edr">EDR deployed</label><div class="switch"><input type="checkbox" id="edr" checked onchange="calc()"><span class="slider"></span></div></div>
-            <div class="toggle"><label for="ids">IDS / IPS deployed</label><div class="switch"><input type="checkbox" id="ids" checked onchange="calc()"><span class="slider"></span></div></div>
-            <div class="toggle"><label for="firewall">Firewall active</label><div class="switch"><input type="checkbox" id="firewall" checked onchange="calc()"><span class="slider"></span></div></div>
-            <div class="toggle"><label for="training">Security training active</label><div class="switch"><input type="checkbox" id="training" checked onchange="calc()"><span class="slider"></span></div></div>
-          </div>
-          <div class="field-grid">
-            <div class="field">
-              <label for="password">Password policy</label>
-              <select id="password" onchange="calc()">
-                <option value="Weak">Weak</option>
-                <option value="Moderate" selected>Moderate</option>
-                <option value="Strong">Strong</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="patchage">Patch age (days)</label>
-              <input type="number" id="patchage" value="45" min="0" max="365" oninput="calc()">
-            </div>
-            <div class="field">
-              <label for="cvss">Max CVSS score (0–10)</label>
-              <input type="number" id="cvss" value="5" min="0" max="10" step="0.1" oninput="calc()">
-            </div>
-            <div class="field">
-              <label for="audit">Security audit score (0–100)</label>
-              <input type="number" id="audit" value="80" min="0" max="100" oninput="calc()">
-            </div>
-            <div class="field">
-              <label for="maturity">Security maturity score (0–100)</label>
-              <input type="number" id="maturity" value="75" min="0" max="100" oninput="calc()">
-            </div>
-          </div>
-        </fieldset>
-
-        <fieldset>
-          <legend>Timing, impact &amp; risk context</legend>
-          <div class="field-grid">
-            <div class="field">
-              <label for="detect">Detection time (min)</label>
-              <input type="number" id="detect" value="100" min="16" max="300" oninput="calc()">
-            </div>
-            <div class="field">
-              <label for="respond">Response time (min)</label>
-              <input type="number" id="respond" value="40" min="5" max="250" oninput="calc()">
-            </div>
-            <div class="field">
-              <label for="exfil">Data exfiltrated so far (GB)</label>
-              <input type="number" id="exfil" value="0" min="0" max="300" oninput="calc()">
-            </div>
-            <div class="field">
-              <label for="thirdparty">Third-party risk score (0–100)</label>
-              <input type="number" id="thirdparty" value="30" min="0" max="100" oninput="calc()">
-            </div>
-            <div class="field">
-              <label for="insider">Insider risk score (0–100)</label>
-              <input type="number" id="insider" value="20" min="0" max="100" oninput="calc()">
-            </div>
           </div>
         </fieldset>
       </div>
@@ -403,9 +369,10 @@
         <div class="result-note" id="resultNote">Adjust the fields to see a live estimate.</div>
         <div class="result-disclaimer">
           Simplified, client-side approximation calibrated from the trained
-          model's feature importances — not the Random Forest itself. For the
-          production-fidelity prediction, use the Streamlit dashboard
-          (<code>app.py</code>), which loads <code>cyber_model.joblib</code> directly.
+          model's feature importances &mdash; not the Random Forest itself. For the
+          production-fidelity prediction using all 16 features, use the Streamlit
+          dashboard (<code>app.py</code>), which loads
+          <code>cyber_model.joblib</code> directly.
         </div>
       </div>
     </div>
@@ -455,12 +422,12 @@
     "Persistence": 1.0,
     "Impact": 2.7,
   };
-  const COMPLEXITY_LOGIT = { "Basic": 0.0, "Intermediate": 0.02, "Advanced": 0.05 };
+  const COMPANY_LOGIT = { "Small": 0.05, "Medium": 0.0, "Large": -0.03 };
   const FLAG_W = {
     phishing: 0.18, credstolen: 0.30, privesc: 0.55,
     lateral: 0.55, persistence: 0.45, encrypted: 0.40,
   };
-  const DEF_W = { mfa: -0.40, edr: -0.20, ids: -0.15, training: -0.17, firewall: -0.03 };
+  const DEF_W = { mfa: -0.40, edr: -0.20, firewall: -0.03 };
 
   function sigmoid(x) { return 1 / (1 + Math.exp(-x)); }
   function val(id) { return document.getElementById(id).value; }
@@ -469,7 +436,7 @@
 
   function calc() {
     let logit = STAGE_LOGIT[val('stage')];
-    logit += COMPLEXITY_LOGIT[val('complexity')];
+    logit += COMPANY_LOGIT[val('companysize')] || 0;
 
     for (const key of Object.keys(FLAG_W)) {
       if (checked(key)) logit += FLAG_W[key];
@@ -477,29 +444,18 @@
     for (const key of Object.keys(DEF_W)) {
       if (checked(key)) logit += DEF_W[key];
     }
-    if (val('password') === 'Weak') logit += 0.25;
-    if (checked('zeroday')) logit += 0.05;
-    if (checked('internet')) logit += 0.03;
 
     const patchAge = num('patchage');
     const cvss = num('cvss');
-    const audit = num('audit');
-    const maturity = num('maturity');
     const detect = Math.max(num('detect'), 16);
     const respond = Math.max(num('respond'), 5);
     const exfil = Math.max(num('exfil'), 0);
-    const thirdparty = num('thirdparty');
-    const insider = num('insider');
 
     logit += (patchAge / 179) * 0.3;
     logit += (cvss / 10) * 0.3;
-    logit += ((100 - audit) / 100) * 0.4;
-    logit += ((100 - maturity) / 100) * 0.2;
     logit += ((detect - 16) / (242 - 16)) * 0.6;
     logit += ((respond - 5) / (221 - 5)) * 0.3;
     logit += (Math.sqrt(exfil) / Math.sqrt(220)) * 0.4;
-    logit += (thirdparty / 100) * 0.15;
-    logit += (insider / 100) * 0.15;
 
     let p = sigmoid(logit);
     p = Math.min(Math.max(p, 0.01), 0.99);
@@ -534,30 +490,27 @@
   /* ---------------- presets ---------------- */
   const PRESETS = {
     A: {
-      stage: 'Reconnaissance', complexity: 'Basic',
+      stage: 'Reconnaissance', companysize: 'Large',
       phishing: false, credstolen: false, privesc: false, lateral: false, persistence: false, encrypted: false,
-      zeroday: false, internet: false,
-      mfa: true, edr: true, ids: true, firewall: true, training: true, password: 'Strong',
-      patchage: 10, cvss: 3, audit: 95, maturity: 95,
-      detect: 25, respond: 10, exfil: 0, thirdparty: 15, insider: 5,
+      mfa: true, edr: true, firewall: true,
+      patchage: 10, cvss: 3,
+      detect: 25, respond: 10, exfil: 0,
     },
     B: {
-      stage: 'Impact', complexity: 'Advanced',
+      stage: 'Impact', companysize: 'Small',
       phishing: true, credstolen: true, privesc: true, lateral: true, persistence: true, encrypted: true,
-      zeroday: true, internet: true,
-      mfa: false, edr: false, ids: false, firewall: false, training: false, password: 'Weak',
-      patchage: 160, cvss: 9.4, audit: 42, maturity: 20,
-      detect: 210, respond: 150, exfil: 85, thirdparty: 80, insider: 60,
+      mfa: false, edr: false, firewall: false,
+      patchage: 160, cvss: 9.4,
+      detect: 210, respond: 150, exfil: 85,
     },
   };
 
   const DEFAULTS = {
-    stage: 'Execution', complexity: 'Intermediate',
+    stage: 'Execution', companysize: 'Medium',
     phishing: false, credstolen: false, privesc: false, lateral: false, persistence: false, encrypted: false,
-    zeroday: false, internet: false,
-    mfa: true, edr: true, ids: true, firewall: true, training: true, password: 'Moderate',
-    patchage: 45, cvss: 5, audit: 80, maturity: 75,
-    detect: 100, respond: 40, exfil: 0, thirdparty: 30, insider: 20,
+    mfa: true, edr: true, firewall: true,
+    patchage: 45, cvss: 5,
+    detect: 100, respond: 40, exfil: 0,
   };
 
   function applyState(state) {
