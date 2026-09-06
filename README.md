@@ -1,0 +1,114 @@
+# 🛡️ Cyber Breach Prediction Across the Enterprise Kill Chain
+
+**Using Machine Learning**
+
+> 3rd Year B.Tech — Department of Information Technology
+> A. P. Shah Institute of Technology (APSIT), Thane
+> Mini Project / AIML Lab Review — September 7, 2026
+
+---
+
+## Overview
+
+SOC analysts manually assess breach likelihood under time pressure, using scattered signals — a slow, error-prone process. This project builds a **supervised ML classifier** that ingests live defensive-posture and kill-chain telemetry and outputs a **real-time breach probability**, flagging high-risk incidents for immediate escalation.
+
+**Core question:** Given an enterprise's defenses and how far an attacker has progressed through the Cyber Kill Chain, will this intrusion end in a **successful breach** or be **contained/mitigated**?
+
+---
+
+## Model at a Glance
+
+| Metric | Value |
+|--------|-------|
+| Algorithm | Random Forest (150 trees, max depth 12) |
+| Training data | 100,000 incidents (after cleaning) |
+| Input features | 40 (enterprise profile + defenses + kill-chain telemetry) |
+| Test accuracy | **86.4%** |
+| F1-score (breach class) | **0.77** |
+| ROC-AUC | **0.93** |
+
+### Key Finding — Kill-Chain Depth is Highly Predictive
+
+| Furthest Stage Reached | Breach Success Rate |
+|------------------------|-------------------|
+| Reconnaissance | 4.7% |
+| Initial Access | 38.6% |
+| Execution | 56.1% |
+| Persistence | 73.3% |
+| Impact | 93.8% |
+
+---
+
+## Project Files
+
+| File | Description |
+|------|-------------|
+| `app.py` | Streamlit SOC-analyst dashboard (main application) |
+| `cyber_model.joblib` | Trained scikit-learn pipeline (Random Forest) |
+| `Enterprise_Cyber_Kill_Chain_Dataset.csv` | Raw dataset (100,500 rows × 50 columns) |
+| `cyber-attacks-analysis.ipynb` | Full EDA + modeling notebook |
+| `index.html` | Standalone HTML prototype (client-side approximation) |
+| `requirements.txt` | Python dependencies |
+| `aiml_lab_poster_16x9.png` | Academic poster (image) |
+| `aiml_lab_poster_16x9.pptx` | Academic poster (editable) |
+| `project_brief.txt` | Detailed technical hand-off document |
+
+---
+
+## Quick Start
+
+### 1. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 2. Run the dashboard
+
+```bash
+streamlit run app.py
+```
+
+The app will open at `http://localhost:8501`. Make sure `cyber_model.joblib` is in the same folder as `app.py`.
+
+### 3. Try the demo presets
+
+Use the **"Quick scenario"** dropdown at the top of the dashboard:
+- **Case A: Contained attack** — Reconnaissance stage, hardened defenses → LOW risk (~4%)
+- **Case B: Critical breach** — Impact stage, weak defenses → CRITICAL risk (~95%)
+
+---
+
+## Data Cleaning & Leakage Removal
+
+1. Removed 500 exact duplicate rows
+2. **Dropped 7 post-breach leakage columns** (Recovery_Cost_USD, Records_Compromised, Downtime_Hours, Financial_Loss_USD, Cyber_Risk_Score, Risk_Level, Incident_Severity) — these are only known *after* a breach, so including them would inflate accuracy artificially
+3. Imputed missing `Compliance` values as `"None"` (unregulated sectors)
+4. Imputed missing `Detection_Time_Min` with the column median
+5. Dropped `Incident_ID` and `Timestamp` (non-predictive / already decomposed)
+
+---
+
+## Tech Stack
+
+- **Python** · pandas · NumPy · scikit-learn · matplotlib · seaborn
+- **Streamlit** — interactive dashboard
+- **joblib** — model persistence
+- **HTML / CSS / JS** — standalone prototype
+
+---
+
+## Deploying to Streamlit Community Cloud
+
+1. Push this folder to a **GitHub repository**
+2. Go to [share.streamlit.io](https://share.streamlit.io)
+3. Connect your repo, set `app.py` as the main file
+4. Deploy — Streamlit Cloud will install from `requirements.txt` automatically
+
+> **Note:** `cyber_model.joblib` is ~25 MB. GitHub supports files up to 100 MB, so it will work. If you hit issues, use [Git LFS](https://git-lfs.github.com/).
+
+---
+
+## Disclaimer
+
+This is an academic decision-support prototype for demonstration purposes. It does not replace analyst judgment or an organization's incident response process.
