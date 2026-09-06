@@ -101,7 +101,7 @@ CATEGORY_OPTIONS = {
 
 @st.cache_resource
 def load_model():
-    return joblib.load("cyber_model.joblib")
+    return joblib.load("model/cyber_model.joblib")
 
 
 def risk_badge(prob: float):

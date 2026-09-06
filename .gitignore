@@ -1,3 +1,28 @@
-/aiml_lab_poster_16x9.png
-/aiml_lab_poster_16x9.pptx
-/project_brief.txt
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+venv/
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Streamlit
+.streamlit/
+
+# Docs (internal use only, not needed in repo)
+docs/project_brief.txt
+docs/aiml_lab_poster_16x9.png
+docs/aiml_lab_poster_16x9.pptx

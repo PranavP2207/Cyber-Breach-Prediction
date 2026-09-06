@@ -35,19 +35,41 @@ SOC analysts manually assess breach likelihood under time pressure, using scatte
 
 ---
 
-## Project Files
+## Project Structure
 
-| File | Description |
-|------|-------------|
-| `app.py` | Streamlit SOC-analyst dashboard (main application) |
-| `cyber_model.joblib` | Trained scikit-learn pipeline (Random Forest) |
-| `Enterprise_Cyber_Kill_Chain_Dataset.csv` | Raw dataset (100,500 rows × 50 columns) |
-| `cyber-attacks-analysis.ipynb` | Full EDA + modeling notebook |
-| `index.html` | Standalone HTML prototype (client-side approximation) |
-| `requirements.txt` | Python dependencies |
-| `aiml_lab_poster_16x9.png` | Academic poster (image) |
-| `aiml_lab_poster_16x9.pptx` | Academic poster (editable) |
-| `project_brief.txt` | Detailed technical hand-off document |
+```
+Cyber-Breach-Prediction/
+│
+├── app.py                      # 🚀 Streamlit dashboard (entry point)
+├── requirements.txt            # Python dependencies
+├── README.md
+├── .gitignore
+│
+├── model/
+│   └── cyber_model.joblib      # Trained scikit-learn pipeline (Random Forest)
+│
+├── frontend/
+│   └── index.html              # Standalone HTML/CSS/JS prototype (client-side)
+│
+├── notebooks/
+│   └── cyber-attacks-analysis.ipynb   # Full EDA + modeling pipeline
+│
+├── data/
+│   └── Enterprise_Cyber_Kill_Chain_Dataset.csv   # Raw dataset (100,500 × 50)
+│
+└── docs/
+    ├── project_brief.txt               # Technical hand-off document
+    ├── aiml_lab_poster_16x9.png        # Academic poster (image)
+    └── aiml_lab_poster_16x9.pptx       # Academic poster (editable)
+```
+
+| Folder | Contents |
+|--------|----------|
+| **`model/`** | Trained ML model (`cyber_model.joblib`) — loaded by `app.py` at runtime |
+| **`frontend/`** | Standalone HTML prototype with a client-side breach calculator |
+| **`notebooks/`** | Jupyter notebook with complete EDA, data cleaning, and model training |
+| **`data/`** | Raw dataset used for training and analysis |
+| **`docs/`** | Project brief, academic poster, and other documentation |
 
 ---
 
@@ -65,13 +87,13 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-The app will open at `http://localhost:8501`. Make sure `cyber_model.joblib` is in the same folder as `app.py`.
+The app will open at `http://localhost:8501`.
 
 ### 3. Try the demo presets
 
 Use the **"Quick scenario"** dropdown at the top of the dashboard:
-- **Case A: Contained attack** — Reconnaissance stage, hardened defenses → LOW risk (~4%)
-- **Case B: Critical breach** — Impact stage, weak defenses → CRITICAL risk (~95%)
+- **Case A: Contained attack** — Reconnaissance stage, hardened defenses → LOW risk (~1%)
+- **Case B: Critical breach** — Impact stage, weak defenses → CRITICAL risk (~90%)
 
 ---
 
