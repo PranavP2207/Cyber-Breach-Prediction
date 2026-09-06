@@ -195,7 +195,7 @@
       <div class="stat-tile">
         <div class="label">Test Accuracy</div>
         <div class="value">86.2%</div>
-        <div class="foot">Random Forest, held-out 20% split</div>
+        <div class="foot">Random Forest, 16 features, held-out 20% split</div>
       </div>
       <div class="stat-tile">
         <div class="label">ROC-AUC</div>
@@ -234,35 +234,41 @@
       <div class="pl-node">
         <div class="pl-tag">02 · CLEAN</div>
         <div class="pl-title">Data cleaning</div>
-        <div class="pl-detail">Drop 500 duplicates &middot; remove 7 post-breach leakage columns &middot; impute Detection_Time_Min</div>
-      </div>
-      <div class="pl-arrow">&darr;</div>
-      <div class="pl-node">
-        <div class="pl-tag">03 &middot; TRANSFORM</div>
-        <div class="pl-title">Feature engineering</div>
-        <div class="pl-detail">One-hot encode 2 categorical fields (Attack_Stage, Company_Size) &middot; pass through 14 numeric fields &rarr; 16 model features</div>
+        <div class="pl-detail">Drop 500 duplicates · remove 7 post-breach leakage columns · impute Detection_Time_Min</div>
       </div>
       <div class="pl-arrow">↓</div>
       <div class="pl-node">
-        <div class="pl-tag">04 · SPLIT</div>
+        <div class="pl-tag">03 · TRANSFORM</div>
+        <div class="pl-title">Feature engineering</div>
+        <div class="pl-detail">One-hot encode 11 categorical fields · pass through 29 numeric fields → 40 model features</div>
+      </div>
+      <div class="pl-arrow">↓</div>
+      <div class="pl-node">
+        <div class="pl-tag">04 · REDUCE</div>
+        <div class="pl-title">Scope reduction</div>
+        <div class="pl-detail">Feature-importance analysis showed ~93% of signal in the top 20 columns → trimmed to 16 high-value features (2 categorical, 14 numeric)</div>
+      </div>
+      <div class="pl-arrow">↓</div>
+      <div class="pl-node">
+        <div class="pl-tag">05 · SPLIT</div>
         <div class="pl-title">Train / test split</div>
         <div class="pl-detail">80,000 train / 20,000 test, stratified on Attack_Success</div>
       </div>
       <div class="pl-arrow">↓</div>
       <div class="pl-node">
-        <div class="pl-tag">05 · TRAIN</div>
+        <div class="pl-tag">06 · TRAIN</div>
         <div class="pl-title">Model training</div>
-        <div class="pl-detail">Logistic Regression baseline · Random Forest (150 trees, max depth 12)</div>
+        <div class="pl-detail">Logistic Regression baseline · Random Forest (150 trees, max depth 12) on the 16-feature set</div>
       </div>
       <div class="pl-arrow">↓</div>
       <div class="pl-node">
-        <div class="pl-tag">06 · EVALUATE</div>
+        <div class="pl-tag">07 · EVALUATE</div>
         <div class="pl-title">Evaluation</div>
         <div class="pl-detail">Accuracy, F1, ROC-AUC, confusion matrix, feature importance</div>
       </div>
       <div class="pl-arrow">↓</div>
       <div class="pl-node">
-        <div class="pl-tag">07 · SERVE</div>
+        <div class="pl-tag">08 · SERVE</div>
         <div class="pl-title">Deployment prototypes</div>
         <div class="pl-detail">Streamlit SOC dashboard (full model) · this standalone calculator (client-side approximation)</div>
       </div>
