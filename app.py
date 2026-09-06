@@ -12,6 +12,7 @@ Run locally with:
 (cyber_model.joblib must be in the same folder.)
 """
 
+import os
 import joblib
 import numpy as np
 import pandas as pd
@@ -63,7 +64,8 @@ CATEGORY_OPTIONS = {
 
 
 @st.cache_resource
-def load_model():
+def load_model(model_mtime: float):
+    """Load trained pipeline from disk, cache-busting when file timestamp updates."""
     return joblib.load("model/cyber_model.joblib")
 
 
@@ -172,14 +174,19 @@ row = {
 
 input_df = pd.DataFrame([row], columns=FEATURE_COLUMNS)
 
-try:
-    model = load_model()
-    breach_prob = float(model.predict_proba(input_df)[0, 1])
-except FileNotFoundError:
+MODEL_PATH = "model/cyber_model.joblib"
+
+if not os.path.exists(MODEL_PATH):
     st.error(
-        "cyber_model.joblib not found. Place it in the same folder as app.py "
-        "(it is produced by the training notebook)."
+        f"{MODEL_PATH} not found. Ensure the trained model artifact is present."
     )
+    st.stop()
+
+try:
+    model = load_model(os.path.getmtime(MODEL_PATH))
+    breach_prob = float(model.predict_proba(input_df)[0, 1])
+except Exception as e:
+    st.error(f"Error making prediction: {e}")
     st.stop()
 
 label, color = risk_badge(breach_prob)
