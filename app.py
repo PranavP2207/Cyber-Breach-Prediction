@@ -676,18 +676,17 @@ st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
 # ------------------------------------------------------------------
 col_left, col_right = st.columns(2)
 
-with col_left:
+with col_left.container(border=True):
     st.markdown(
         """
-        <div class="soc-card">
-            <div class="soc-card-title">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-                    <line x1="8" y1="21" x2="16" y2="21"/>
-                    <line x1="12" y1="17" x2="12" y2="21"/>
-                </svg>
-                Domain 1: Defenses & Vulnerability Posture
-            </div>
+        <div class="soc-card-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                <line x1="8" y1="21" x2="16" y2="21"/>
+                <line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+            Domain 1: Defenses & Vulnerability Posture
+        </div>
         """,
         unsafe_allow_html=True,
     )
@@ -745,19 +744,16 @@ with col_left:
         )
     )
 
-    st.markdown("</div>", unsafe_allow_html=True)
 
-
-with col_right:
+with col_right.container(border=True):
     st.markdown(
         """
-        <div class="soc-card">
-            <div class="soc-card-title">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-                </svg>
-                Domain 2: Kill Chain Telemetry & Response
-            </div>
+        <div class="soc-card-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+            Domain 2: Kill Chain Telemetry & Response
+        </div>
         """,
         unsafe_allow_html=True,
     )
@@ -825,8 +821,6 @@ with col_right:
                 help="Time from alert triage to initial containment attempt.",
             )
         )
-
-    st.markdown("</div>", unsafe_allow_html=True)
 
 # ------------------------------------------------------------------
 # 11. Cyber Kill Chain Progression Timeline Visualization
