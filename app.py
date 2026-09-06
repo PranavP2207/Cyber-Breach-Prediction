@@ -22,7 +22,6 @@ import streamlit as st
 # ------------------------------------------------------------------
 st.set_page_config(
     page_title="Cyber Breach Prediction Dashboard",
-    page_icon="🛡️",
     layout="wide",
 )
 
@@ -135,14 +134,14 @@ def number_from_preset(label, key, preset, default, **kwargs):
 # ------------------------------------------------------------------
 # Header
 # ------------------------------------------------------------------
-st.title("🛡️ Cyber Breach Prediction Across the Enterprise Kill Chain")
+st.title("Cyber Breach Prediction Across the Enterprise Kill Chain")
 st.caption(
     "Random Forest classifier trained on 100,000 enterprise incident records. "
     "Predicts the probability that an *in-progress* intrusion results in a "
     "successful breach, using only information available before a breach outcome is known."
 )
 
-with st.expander("ℹ️ About this model", expanded=False):
+with st.expander("About this model", expanded=False):
     st.markdown(
         """
         - **Model:** Random Forest (150 trees, max depth 12), scikit-learn pipeline
@@ -166,7 +165,7 @@ col1, col2, col3 = st.columns(3)
 # Column 1: Enterprise Profile
 # ------------------------------------------------------------------
 with col1:
-    st.subheader("🏢 Enterprise Profile")
+    st.subheader("Enterprise Profile")
     industry = selectbox_from_preset("Industry", "Industry", preset)
     country = selectbox_from_preset("Country", "Country", preset)
     company_size = selectbox_from_preset("Company Size", "Company_Size", preset)
@@ -189,7 +188,7 @@ with col1:
 # Column 2: Defense Posture
 # ------------------------------------------------------------------
 with col2:
-    st.subheader("🛡️ Defense Posture")
+    st.subheader("Defense Posture")
     firewall = toggle_from_preset("Firewall active", "Firewall", preset, True)
     mfa = toggle_from_preset("Multi-Factor Authentication enforced", "MFA", preset, True)
     edr = toggle_from_preset("EDR deployed", "EDR", preset, True)
