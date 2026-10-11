@@ -1,0 +1,611 @@
+{
+  "protocol": "Deduplicate before an 80/20 stratified split, random_state=42. LR preprocessing fits on training rows only. Both scored on the same reconstructed documented 20,000-row holdout at threshold 0.5.",
+  "forest_provenance": "Existing 16-feature artifact retained byte-for-byte. Its documented split is reconstructed; original fit-time lineage is not embedded in the artifact. Original notebook/script imputed before splitting; full-data and training medians both equal 103 here.",
+  "raw_rows": 100500,
+  "unique_rows": 100000,
+  "duplicates": 500,
+  "raw_columns": 50,
+  "train_rows": 80000,
+  "test_rows": 20000,
+  "test_positive_rows": 5881,
+  "positive_rate": 0.29406,
+  "missing_detection_unique": 3147,
+  "detection_train_median": 103.0,
+  "feature_order": [
+    "Attack_Stage",
+    "Company_Size",
+    "Lateral_Movement",
+    "Privilege_Escalation",
+    "Persistence",
+    "Credential_Stolen",
+    "Data_Exfiltration_GB",
+    "Data_Encrypted",
+    "Phishing_Click",
+    "Detection_Time_Min",
+    "Response_Time_Min",
+    "Firewall",
+    "MFA",
+    "EDR",
+    "CVSS_Score",
+    "Patch_Age_Days"
+  ],
+  "encoded_features": 22,
+  "excluded_outcome_columns": [
+    "Recovery_Cost_USD",
+    "Records_Compromised",
+    "Downtime_Hours",
+    "Financial_Loss_USD",
+    "Cyber_Risk_Score",
+    "Risk_Level",
+    "Incident_Severity"
+  ],
+  "metrics": {
+    "Random Forest": {
+      "accuracy": 0.8622,
+      "precision": 0.7606338615512928,
+      "recall": 0.775378337017514,
+      "f1": 0.7679353317615358,
+      "roc_auc": 0.9358344975474397,
+      "average_precision": 0.84602795715548,
+      "brier": 0.09427291731025741,
+      "confusion_matrix": [
+        [
+          12684,
+          1435
+        ],
+        [
+          1321,
+          4560
+        ]
+      ]
+    },
+    "Logistic Regression": {
+      "accuracy": 0.86005,
+      "precision": 0.7687478200209278,
+      "recall": 0.7495323924502636,
+      "f1": 0.7590185105467069,
+      "roc_auc": 0.933369285743852,
+      "average_precision": 0.8419139780450126,
+      "brier": 0.09628483340249408,
+      "confusion_matrix": [
+        [
+          12793,
+          1326
+        ],
+        [
+          1473,
+          4408
+        ]
+      ]
+    }
+  },
+  "grouped_importance": {
+    "Attack_Stage": 0.31400981009131623,
+    "Company_Size": 0.005548424745645522,
+    "Lateral_Movement": 0.16193718835827456,
+    "Privilege_Escalation": 0.13766867290570037,
+    "Persistence": 0.10099030483630977,
+    "Credential_Stolen": 0.05970835452737404,
+    "Data_Exfiltration_GB": 0.024853481104248946,
+    "Data_Encrypted": 0.027862605119375213,
+    "Phishing_Click": 0.008762363860512238,
+    "Detection_Time_Min": 0.08392260836567567,
+    "Response_Time_Min": 0.030209588533004827,
+    "Firewall": 0.0015446673384988039,
+    "MFA": 0.002253467158657964,
+    "EDR": 0.00890379645680211,
+    "CVSS_Score": 0.015887570338510463,
+    "Patch_Age_Days": 0.015937096260093486
+  },
+  "stage_rates": {
+    "Reconnaissance": 0.047284791339270126,
+    "Initial Access": 0.38629978515947777,
+    "Execution": 0.5608935414524722,
+    "Persistence": 0.7323531675775536,
+    "Impact": 0.9380224848659556
+  },
+  "majority_baseline_accuracy": 0.70595,
+  "cases": [
+    {
+      "name": "A · Contained reconnaissance",
+      "note": "Original low-risk demo; all six threat flags off and all three defensive controls on.",
+      "features": {
+        "Attack_Stage": "Reconnaissance",
+        "Company_Size": "Large",
+        "Lateral_Movement": false,
+        "Privilege_Escalation": false,
+        "Persistence": false,
+        "Credential_Stolen": false,
+        "Data_Exfiltration_GB": 0.0,
+        "Data_Encrypted": false,
+        "Phishing_Click": false,
+        "Detection_Time_Min": 25,
+        "Response_Time_Min": 10,
+        "Firewall": true,
+        "MFA": true,
+        "EDR": true,
+        "CVSS_Score": 3.0,
+        "Patch_Age_Days": 10
+      },
+      "outputs": {
+        "Random Forest": {
+          "probability": 0.0019465601592194648,
+          "tier": "LOW",
+          "class_at_0_5": 0
+        },
+        "Logistic Regression": {
+          "probability": 0.0015771569639055811,
+          "tier": "LOW",
+          "class_at_0_5": 0
+        }
+      }
+    },
+    {
+      "name": "B · Impact / weak defenses",
+      "note": "Original critical demo; all threat flags on, controls off, late-stage impact and long delays.",
+      "features": {
+        "Attack_Stage": "Impact",
+        "Company_Size": "Small",
+        "Lateral_Movement": true,
+        "Privilege_Escalation": true,
+        "Persistence": true,
+        "Credential_Stolen": true,
+        "Data_Exfiltration_GB": 85.0,
+        "Data_Encrypted": true,
+        "Phishing_Click": true,
+        "Detection_Time_Min": 210,
+        "Response_Time_Min": 150,
+        "Firewall": false,
+        "MFA": false,
+        "EDR": false,
+        "CVSS_Score": 9.4,
+        "Patch_Age_Days": 160
+      },
+      "outputs": {
+        "Random Forest": {
+          "probability": 0.9357629749844766,
+          "tier": "CRITICAL",
+          "class_at_0_5": 1
+        },
+        "Logistic Regression": {
+          "probability": 0.9943751349659393,
+          "tier": "CRITICAL",
+          "class_at_0_5": 1
+        }
+      }
+    },
+    {
+      "name": "C · Initial access / phishing",
+      "note": "Original phishing demo. Stage is Initial Access; its risk band is computed, not assigned by its title.",
+      "features": {
+        "Attack_Stage": "Initial Access",
+        "Company_Size": "Medium",
+        "Lateral_Movement": false,
+        "Privilege_Escalation": false,
+        "Persistence": false,
+        "Credential_Stolen": true,
+        "Data_Exfiltration_GB": 0.5,
+        "Data_Encrypted": false,
+        "Phishing_Click": true,
+        "Detection_Time_Min": 65,
+        "Response_Time_Min": 30,
+        "Firewall": true,
+        "MFA": false,
+        "EDR": true,
+        "CVSS_Score": 6.8,
+        "Patch_Age_Days": 50
+      },
+      "outputs": {
+        "Random Forest": {
+          "probability": 0.19558215110090693,
+          "tier": "LOW",
+          "class_at_0_5": 0
+        },
+        "Logistic Regression": {
+          "probability": 0.01519466896588776,
+          "tier": "LOW",
+          "class_at_0_5": 0
+        }
+      }
+    },
+    {
+      "name": "D · Persistence / ransomware",
+      "note": "Original ransomware demo with Firewall on and MFA/EDR off.",
+      "features": {
+        "Attack_Stage": "Persistence",
+        "Company_Size": "Medium",
+        "Lateral_Movement": true,
+        "Privilege_Escalation": true,
+        "Persistence": true,
+        "Credential_Stolen": true,
+        "Data_Exfiltration_GB": 18.0,
+        "Data_Encrypted": true,
+        "Phishing_Click": true,
+        "Detection_Time_Min": 140,
+        "Response_Time_Min": 90,
+        "Firewall": true,
+        "MFA": false,
+        "EDR": false,
+        "CVSS_Score": 8.2,
+        "Patch_Age_Days": 95
+      },
+      "outputs": {
+        "Random Forest": {
+          "probability": 0.7886911043397139,
+          "tier": "CRITICAL",
+          "class_at_0_5": 1
+        },
+        "Logistic Regression": {
+          "probability": 0.904999585405789,
+          "tier": "CRITICAL",
+          "class_at_0_5": 1
+        }
+      }
+    },
+    {
+      "name": "E · Execution / reference case",
+      "note": "Reference row for cases F–M: all threat flags off, all controls on, Execution stage.",
+      "features": {
+        "Attack_Stage": "Execution",
+        "Company_Size": "Medium",
+        "Lateral_Movement": false,
+        "Privilege_Escalation": false,
+        "Persistence": false,
+        "Credential_Stolen": false,
+        "Data_Exfiltration_GB": 0.0,
+        "Data_Encrypted": false,
+        "Phishing_Click": false,
+        "Detection_Time_Min": 100,
+        "Response_Time_Min": 40,
+        "Firewall": true,
+        "MFA": true,
+        "EDR": true,
+        "CVSS_Score": 5.0,
+        "Patch_Age_Days": 45
+      },
+      "outputs": {
+        "Random Forest": {
+          "probability": 0.3547700659973975,
+          "tier": "MEDIUM",
+          "class_at_0_5": 0
+        },
+        "Logistic Regression": {
+          "probability": 0.005212312749956651,
+          "tier": "LOW",
+          "class_at_0_5": 0
+        }
+      }
+    },
+    {
+      "name": "F · Execution / credentials + escalation",
+      "note": "Compared with E, only Credential_Stolen and Privilege_Escalation turn on.",
+      "features": {
+        "Attack_Stage": "Execution",
+        "Company_Size": "Medium",
+        "Lateral_Movement": false,
+        "Privilege_Escalation": true,
+        "Persistence": false,
+        "Credential_Stolen": true,
+        "Data_Exfiltration_GB": 0.0,
+        "Data_Encrypted": false,
+        "Phishing_Click": false,
+        "Detection_Time_Min": 100,
+        "Response_Time_Min": 40,
+        "Firewall": true,
+        "MFA": true,
+        "EDR": true,
+        "CVSS_Score": 5.0,
+        "Patch_Age_Days": 45
+      },
+      "outputs": {
+        "Random Forest": {
+          "probability": 0.592336632182372,
+          "tier": "HIGH",
+          "class_at_0_5": 1
+        },
+        "Logistic Regression": {
+          "probability": 0.25762228466460296,
+          "tier": "MEDIUM",
+          "class_at_0_5": 0
+        }
+      }
+    },
+    {
+      "name": "G · Execution / lateral movement added",
+      "note": "Compared with F, only Lateral_Movement turns on.",
+      "features": {
+        "Attack_Stage": "Execution",
+        "Company_Size": "Medium",
+        "Lateral_Movement": true,
+        "Privilege_Escalation": true,
+        "Persistence": false,
+        "Credential_Stolen": true,
+        "Data_Exfiltration_GB": 0.0,
+        "Data_Encrypted": false,
+        "Phishing_Click": false,
+        "Detection_Time_Min": 100,
+        "Response_Time_Min": 40,
+        "Firewall": true,
+        "MFA": true,
+        "EDR": true,
+        "CVSS_Score": 5.0,
+        "Patch_Age_Days": 45
+      },
+      "outputs": {
+        "Random Forest": {
+          "probability": 0.6374687457010175,
+          "tier": "HIGH",
+          "class_at_0_5": 1
+        },
+        "Logistic Regression": {
+          "probability": 0.6621786484021938,
+          "tier": "HIGH",
+          "class_at_0_5": 1
+        }
+      }
+    },
+    {
+      "name": "H · Reference / all defenses off",
+      "note": "Compared with E, only Firewall, MFA and EDR turn off. This is a model sensitivity experiment, not a causal intervention.",
+      "features": {
+        "Attack_Stage": "Execution",
+        "Company_Size": "Medium",
+        "Lateral_Movement": false,
+        "Privilege_Escalation": false,
+        "Persistence": false,
+        "Credential_Stolen": false,
+        "Data_Exfiltration_GB": 0.0,
+        "Data_Encrypted": false,
+        "Phishing_Click": false,
+        "Detection_Time_Min": 100,
+        "Response_Time_Min": 40,
+        "Firewall": false,
+        "MFA": false,
+        "EDR": false,
+        "CVSS_Score": 5.0,
+        "Patch_Age_Days": 45
+      },
+      "outputs": {
+        "Random Forest": {
+          "probability": 0.27365007498706206,
+          "tier": "MEDIUM",
+          "class_at_0_5": 0
+        },
+        "Logistic Regression": {
+          "probability": 0.0006299186080629371,
+          "tier": "LOW",
+          "class_at_0_5": 0
+        }
+      }
+    },
+    {
+      "name": "I · Reference / EDR off only",
+      "note": "Compared with E, only EDR turns off. The saved forest gives a lower score, illustrating confounding or unusual learned relationships.",
+      "features": {
+        "Attack_Stage": "Execution",
+        "Company_Size": "Medium",
+        "Lateral_Movement": false,
+        "Privilege_Escalation": false,
+        "Persistence": false,
+        "Credential_Stolen": false,
+        "Data_Exfiltration_GB": 0.0,
+        "Data_Encrypted": false,
+        "Phishing_Click": false,
+        "Detection_Time_Min": 100,
+        "Response_Time_Min": 40,
+        "Firewall": true,
+        "MFA": true,
+        "EDR": false,
+        "CVSS_Score": 5.0,
+        "Patch_Age_Days": 45
+      },
+      "outputs": {
+        "Random Forest": {
+          "probability": 0.26870871748253133,
+          "tier": "MEDIUM",
+          "class_at_0_5": 0
+        },
+        "Logistic Regression": {
+          "probability": 0.00110943360873475,
+          "tier": "LOW",
+          "class_at_0_5": 0
+        }
+      }
+    },
+    {
+      "name": "J · Reference / MFA off only",
+      "note": "Compared with E, only MFA turns off.",
+      "features": {
+        "Attack_Stage": "Execution",
+        "Company_Size": "Medium",
+        "Lateral_Movement": false,
+        "Privilege_Escalation": false,
+        "Persistence": false,
+        "Credential_Stolen": false,
+        "Data_Exfiltration_GB": 0.0,
+        "Data_Encrypted": false,
+        "Phishing_Click": false,
+        "Detection_Time_Min": 100,
+        "Response_Time_Min": 40,
+        "Firewall": true,
+        "MFA": false,
+        "EDR": true,
+        "CVSS_Score": 5.0,
+        "Patch_Age_Days": 45
+      },
+      "outputs": {
+        "Random Forest": {
+          "probability": 0.3669099421389749,
+          "tier": "MEDIUM",
+          "class_at_0_5": 0
+        },
+        "Logistic Regression": {
+          "probability": 0.0052917858257784224,
+          "tier": "LOW",
+          "class_at_0_5": 0
+        }
+      }
+    },
+    {
+      "name": "K · Reference / phishing on only",
+      "note": "Compared with E, only Phishing_Click turns on.",
+      "features": {
+        "Attack_Stage": "Execution",
+        "Company_Size": "Medium",
+        "Lateral_Movement": false,
+        "Privilege_Escalation": false,
+        "Persistence": false,
+        "Credential_Stolen": false,
+        "Data_Exfiltration_GB": 0.0,
+        "Data_Encrypted": false,
+        "Phishing_Click": true,
+        "Detection_Time_Min": 100,
+        "Response_Time_Min": 40,
+        "Firewall": true,
+        "MFA": true,
+        "EDR": true,
+        "CVSS_Score": 5.0,
+        "Patch_Age_Days": 45
+      },
+      "outputs": {
+        "Random Forest": {
+          "probability": 0.3883037350487015,
+          "tier": "MEDIUM",
+          "class_at_0_5": 0
+        },
+        "Logistic Regression": {
+          "probability": 0.005335131779052106,
+          "tier": "LOW",
+          "class_at_0_5": 0
+        }
+      }
+    },
+    {
+      "name": "L · Execution / fast detection + response",
+      "note": "Compared with E, detection/response delays reduce to 25/10 minutes.",
+      "features": {
+        "Attack_Stage": "Execution",
+        "Company_Size": "Medium",
+        "Lateral_Movement": false,
+        "Privilege_Escalation": false,
+        "Persistence": false,
+        "Credential_Stolen": false,
+        "Data_Exfiltration_GB": 0.0,
+        "Data_Encrypted": false,
+        "Phishing_Click": false,
+        "Detection_Time_Min": 25,
+        "Response_Time_Min": 10,
+        "Firewall": true,
+        "MFA": true,
+        "EDR": true,
+        "CVSS_Score": 5.0,
+        "Patch_Age_Days": 45
+      },
+      "outputs": {
+        "Random Forest": {
+          "probability": 0.13804233374124542,
+          "tier": "LOW",
+          "class_at_0_5": 0
+        },
+        "Logistic Regression": {
+          "probability": 0.00031115475834441787,
+          "tier": "LOW",
+          "class_at_0_5": 0
+        }
+      }
+    },
+    {
+      "name": "M · Execution / slow detection + response",
+      "note": "Compared with E, detection/response delays rise to 210/150 minutes.",
+      "features": {
+        "Attack_Stage": "Execution",
+        "Company_Size": "Medium",
+        "Lateral_Movement": false,
+        "Privilege_Escalation": false,
+        "Persistence": false,
+        "Credential_Stolen": false,
+        "Data_Exfiltration_GB": 0.0,
+        "Data_Encrypted": false,
+        "Phishing_Click": false,
+        "Detection_Time_Min": 210,
+        "Response_Time_Min": 150,
+        "Firewall": true,
+        "MFA": true,
+        "EDR": true,
+        "CVSS_Score": 5.0,
+        "Patch_Age_Days": 45
+      },
+      "outputs": {
+        "Random Forest": {
+          "probability": 0.5682812528608402,
+          "tier": "HIGH",
+          "class_at_0_5": 1
+        },
+        "Logistic Regression": {
+          "probability": 0.24715376448803006,
+          "tier": "LOW",
+          "class_at_0_5": 0
+        }
+      }
+    },
+    {
+      "name": "N · Persistence / no encryption or exfiltration",
+      "note": "Advanced progression with encryption off and exfiltration at zero; compare with D, which also changes other inputs.",
+      "features": {
+        "Attack_Stage": "Persistence",
+        "Company_Size": "Medium",
+        "Lateral_Movement": true,
+        "Privilege_Escalation": true,
+        "Persistence": true,
+        "Credential_Stolen": true,
+        "Data_Exfiltration_GB": 0.0,
+        "Data_Encrypted": false,
+        "Phishing_Click": false,
+        "Detection_Time_Min": 100,
+        "Response_Time_Min": 40,
+        "Firewall": true,
+        "MFA": true,
+        "EDR": true,
+        "CVSS_Score": 5.0,
+        "Patch_Age_Days": 45
+      },
+      "outputs": {
+        "Random Forest": {
+          "probability": 0.8056773747188953,
+          "tier": "CRITICAL",
+          "class_at_0_5": 1
+        },
+        "Logistic Regression": {
+          "probability": 0.8222070251884271,
+          "tier": "CRITICAL",
+          "class_at_0_5": 1
+        }
+      }
+    }
+  ],
+  "cross_validation": {},
+  "forest_parameters": {
+    "n_estimators": 150,
+    "max_depth": 12,
+    "min_samples_leaf": 5,
+    "class_weight": null,
+    "random_state": 42
+  },
+  "logistic_parameters": {
+    "max_iter": 1000,
+    "random_state": 42,
+    "iterations": 24,
+    "scaling": "StandardScaler on the 14 numeric/binary columns"
+  },
+  "artifacts": {
+    "cyber_model.joblib": "6a08ee9653086404d905613244853d8093b5e0382d31d7161635b156352884ce",
+    "logistic_model.joblib": "dad45d61a2feaef0764cac4fcfab675ba49d083b1013db6d7945fad43040cb9d",
+    "Enterprise_Cyber_Kill_Chain_Dataset.csv": "16d52b81052b1ee1de59895c2acb8cb240b1be52052de33be72b27158fa0fd87"
+  },
+  "versions": {
+    "python": "3.11.7",
+    "scikit_learn": "1.8.0",
+    "pandas": "3.0.5",
+    "numpy": "2.4.6"
+  }
+}

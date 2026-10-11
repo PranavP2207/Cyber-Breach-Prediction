@@ -1,162 +1,169 @@
-"""
-Retrain the cyber breach prediction model on 16 features (reduced from 40).
-Generates model/cyber_model.joblib and prints verified metrics.
-"""
+"""Reproduce the 16-feature comparison without replacing the existing forest by default.
 
-import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.pipeline import Pipeline
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, f1_score, roc_auc_score, confusion_matrix, classification_report
+python retrain_model.py                  # fit LR, evaluate both, retain current RF
+python retrain_model.py --retrain-forest # fit both with train-only preprocessing
+python retrain_model.py --cv 5           # optional stratified CV on training rows
+"""
+from pathlib import Path
+import argparse
+import hashlib
+import json
+import platform
+
 import joblib
-import os
+import numpy as np
+import pandas as pd
+import sklearn
+from sklearn.compose import ColumnTransformer
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (accuracy_score, average_precision_score, brier_score_loss,
+    confusion_matrix, f1_score, precision_score, recall_score, roc_auc_score)
+from sklearn.model_selection import StratifiedKFold, cross_val_score, train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from project_config import (FEATURE_COLUMNS, CATEGORICAL_FEATURES, NUMERICAL_FEATURES,
+    PRESETS, CASE_NOTES, KILL_CHAIN_STAGES)
 
-# -- Configuration --------------------------------------------------
-DATA_PATH = "data/Enterprise_Cyber_Kill_Chain_Dataset.csv"
-MODEL_PATH = "model/cyber_model.joblib"
+ROOT = Path(__file__).resolve().parent
+DATA_PATH = ROOT / 'data/Enterprise_Cyber_Kill_Chain_Dataset.csv'
+MODEL_PATH = ROOT / 'model/cyber_model.joblib'
+LR_PATH = ROOT / 'model/logistic_model.joblib'
+EVAL_PATH = ROOT / 'model/evaluation.json'
+LEAKAGE_COLS = ['Recovery_Cost_USD', 'Records_Compromised', 'Downtime_Hours',
+    'Financial_Loss_USD', 'Cyber_Risk_Score', 'Risk_Level', 'Incident_Severity']
 
-KEEP_FEATURES = [
-    "Attack_Stage", "Company_Size",  # categorical
-    "Lateral_Movement", "Privilege_Escalation", "Persistence",
-    "Credential_Stolen", "Data_Exfiltration_GB", "Data_Encrypted",
-    "Phishing_Click", "Detection_Time_Min", "Response_Time_Min",
-    "Firewall", "MFA", "EDR", "CVSS_Score", "Patch_Age_Days",
-]
-TARGET = "Attack_Success"
 
-CATEGORICAL_FEATURES = ["Attack_Stage", "Company_Size"]
-NUMERICAL_FEATURES = [f for f in KEEP_FEATURES if f not in CATEGORICAL_FEATURES]
+def sha256(path):
+    with path.open('rb') as handle:
+        return hashlib.file_digest(handle, 'sha256').hexdigest()
 
-LEAKAGE_COLS = [
-    "Recovery_Cost_USD", "Records_Compromised", "Downtime_Hours",
-    "Financial_Loss_USD", "Cyber_Risk_Score", "Risk_Level", "Incident_Severity",
-]
-DROP_COLS = ["Incident_ID", "Timestamp"]
 
-# -- 1. Load data ---------------------------------------------------
-print("Loading data...")
-df = pd.read_csv(DATA_PATH)
-print(f"  Raw shape: {df.shape}")
+def preprocessor(scale=False):
+    steps = [('imputer', SimpleImputer(strategy='median'))]
+    if scale:
+        steps.append(('scaler', StandardScaler()))
+    return ColumnTransformer([
+        ('cat', OneHotEncoder(handle_unknown='ignore', sparse_output=True), CATEGORICAL_FEATURES),
+        ('num', Pipeline(steps), NUMERICAL_FEATURES),
+    ])
 
-# -- 2. Clean -------------------------------------------------------
-before = len(df)
-df = df.drop_duplicates()
-print(f"  Dropped {before - len(df)} duplicate rows -> {len(df)} rows")
 
-df = df.drop(columns=[c for c in LEAKAGE_COLS + DROP_COLS if c in df.columns])
+def scores(model, X, y):
+    probability = model.predict_proba(X)[:, list(model.classes_).index(1)]
+    predicted = (probability >= .5).astype(int)
+    return {
+        'accuracy': float(accuracy_score(y, predicted)),
+        'precision': float(precision_score(y, predicted, zero_division=0)),
+        'recall': float(recall_score(y, predicted, zero_division=0)),
+        'f1': float(f1_score(y, predicted, zero_division=0)),
+        'roc_auc': float(roc_auc_score(y, probability)),
+        'average_precision': float(average_precision_score(y, probability)),
+        'brier': float(brier_score_loss(y, probability)),
+        'confusion_matrix': confusion_matrix(y, predicted, labels=[0, 1]).tolist(),
+    }
 
-if df["Detection_Time_Min"].isna().any():
-    median_val = df["Detection_Time_Min"].median()
-    df["Detection_Time_Min"] = df["Detection_Time_Min"].fillna(median_val)
-    print(f"  Imputed Detection_Time_Min missing values with median={median_val:.1f}")
 
-# -- 3. Select 16 features + target --------------------------------
-X = df[KEEP_FEATURES].copy()
-y = df[TARGET].copy()
-print(f"  Feature matrix: {X.shape}, Target: {y.shape}")
-print(f"  Class balance: {y.value_counts().to_dict()}")
+def tier(p):
+    return 'LOW' if p < .25 else 'MEDIUM' if p < .5 else 'HIGH' if p < .75 else 'CRITICAL'
 
-# -- 4. Train/test split -------------------------------------------
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42, stratify=y
-)
-print(f"  Train: {X_train.shape[0]}  Test: {X_test.shape[0]}")
 
-# -- 5. Preprocessing pipeline -------------------------------------
-preprocessor = ColumnTransformer(
-    transformers=[
-        ("cat", OneHotEncoder(handle_unknown="ignore", sparse_output=True), CATEGORICAL_FEATURES),
-    ],
-    remainder="passthrough",
-    sparse_threshold=0.3,
-)
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--retrain-forest', action='store_true')
+    parser.add_argument('--cv', type=int, default=0, choices=[0, 3, 5, 10])
+    args = parser.parse_args()
+    raw = pd.read_csv(DATA_PATH)
+    df = raw.drop_duplicates().copy()
+    X, y = df[FEATURE_COLUMNS], df['Attack_Success']
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.2, stratify=y, random_state=42)
+    medians = X_train[NUMERICAL_FEATURES].median()
+    print(f'Rows: {len(raw):,} raw -> {len(df):,} unique; {len(X_train):,} train / {len(X_test):,} test', flush=True)
+    lr = Pipeline([
+        ('preprocessor', preprocessor(scale=True)),
+        ('classifier', LogisticRegression(max_iter=1000, random_state=42)),
+    ]).fit(X_train, y_train)
+    if args.retrain_forest:
+        rf = Pipeline([
+            ('preprocessor', preprocessor()),
+            ('classifier', RandomForestClassifier(n_estimators=150, max_depth=12,
+                min_samples_leaf=5, random_state=42, n_jobs=-1, class_weight=None)),
+        ]).fit(X_train, y_train)
+        # Retain the previous artifact before any explicitly requested retraining.
+        backup = ROOT / 'archive/backups/cyber_model.before-retrain.joblib'
+        if MODEL_PATH.exists() and not backup.exists():
+            backup.parent.mkdir(parents=True, exist_ok=True)
+            backup.write_bytes(MODEL_PATH.read_bytes())
+        joblib.dump(rf, MODEL_PATH, compress=3)
+    else:
+        rf = joblib.load(MODEL_PATH)
+    if list(rf.feature_names_in_) != FEATURE_COLUMNS:
+        raise ValueError('Saved forest does not accept the exact 16-feature schema.')
+    # Legacy RF has no imputer. Supply training-only medians for its evaluation;
+    # complete UI rows require no imputation. New pipelines impute internally.
+    rf_test = X_test.copy()
+    rf_test[NUMERICAL_FEATURES] = rf_test[NUMERICAL_FEATURES].fillna(medians)
+    models = {'Random Forest': rf, 'Logistic Regression': lr}
+    evaluation = {name: scores(model, rf_test if name == 'Random Forest' else X_test, y_test)
+                  for name, model in models.items()}
+    ohe = rf.named_steps['preprocessor'].named_transformers_['cat']
+    weights = rf.named_steps['classifier'].feature_importances_
+    importance, offset = {}, 0
+    for feature, categories in zip(CATEGORICAL_FEATURES, ohe.categories_):
+        importance[feature] = float(weights[offset:offset + len(categories)].sum())
+        offset += len(categories)
+    importance.update({feature: float(weight) for feature, weight in zip(NUMERICAL_FEATURES, weights[offset:])})
+    cases = []
+    for name, row in PRESETS.items():
+        if row is None:
+            continue
+        frame = pd.DataFrame([row], columns=FEATURE_COLUMNS)
+        output = {}
+        for model_name, model in models.items():
+            p = float(model.predict_proba(frame)[0, list(model.classes_).index(1)])
+            output[model_name] = {'probability': p, 'tier': tier(p), 'class_at_0_5': int(p >= .5)}
+        cases.append({'name': name, 'note': CASE_NOTES[name[0]], 'features': row, 'outputs': output})
+    cv = {}
+    if args.cv:
+        folds = StratifiedKFold(n_splits=args.cv, shuffle=True, random_state=42)
+        # Fresh pipelines fit imputation/encoding within each fold. Keep outer
+        # parallelism at one; the forest already parallelizes its trees.
+        fresh_rf = Pipeline([('preprocessor', preprocessor()),
+            ('classifier', RandomForestClassifier(n_estimators=150, max_depth=12,
+                min_samples_leaf=5, random_state=42, n_jobs=-1, class_weight=None))])
+        for name, model in {'Random Forest': fresh_rf, 'Logistic Regression': lr}.items():
+            values = cross_val_score(model, X_train, y_train, scoring='roc_auc', cv=folds, n_jobs=1)
+            cv[name] = {'folds': args.cv, 'roc_auc_mean': float(values.mean()),
+                'roc_auc_std': float(values.std()), 'fold_scores': values.tolist()}
+    LR_PATH.parent.mkdir(parents=True, exist_ok=True)
+    joblib.dump(lr, LR_PATH, compress=3)
+    metadata = {
+        'protocol': 'Deduplicate before an 80/20 stratified split, random_state=42. LR preprocessing fits on training rows only. Both scored on the same reconstructed documented 20,000-row holdout at threshold 0.5.',
+        'forest_provenance': ('Retrained by this script with train-only imputation.' if args.retrain_forest else
+            'Existing 16-feature artifact retained byte-for-byte. Its documented split is reconstructed; original fit-time lineage is not embedded in the artifact. Original notebook/script imputed before splitting; full-data and training medians both equal 103 here.'),
+        'raw_rows': len(raw), 'unique_rows': len(df), 'duplicates': len(raw)-len(df),
+        'raw_columns': len(raw.columns), 'train_rows': len(X_train), 'test_rows': len(X_test),
+        'test_positive_rows': int(y_test.sum()), 'positive_rate': float(y.mean()),
+        'missing_detection_unique': int(X['Detection_Time_Min'].isna().sum()),
+        'detection_train_median': float(medians['Detection_Time_Min']),
+        'feature_order': FEATURE_COLUMNS, 'encoded_features': len(weights),
+        'excluded_outcome_columns': LEAKAGE_COLS,
+        'metrics': evaluation, 'grouped_importance': importance,
+        'stage_rates': {stage: float(df.loc[df['Attack_Stage']==stage, 'Attack_Success'].mean()) for stage in KILL_CHAIN_STAGES},
+        'majority_baseline_accuracy': float((y_test == 0).mean()),
+        'cases': cases, 'cross_validation': cv,
+        'forest_parameters': {key: rf.named_steps['classifier'].get_params()[key] for key in
+            ['n_estimators','max_depth','min_samples_leaf','class_weight','random_state']},
+        'logistic_parameters': {'max_iter': 1000, 'random_state': 42, 'iterations': int(lr.named_steps['classifier'].n_iter_[0]), 'scaling': 'StandardScaler on the 14 numeric/binary columns'},
+        'artifacts': {p.name: sha256(p) for p in [MODEL_PATH, LR_PATH, DATA_PATH]},
+        'versions': {'python': platform.python_version(), 'scikit_learn': sklearn.__version__, 'pandas': pd.__version__, 'numpy': np.__version__},
+    }
+    EVAL_PATH.write_text(json.dumps(metadata, indent=2, ensure_ascii=False), encoding='utf-8')
+    for name, result in evaluation.items():
+        print(name, json.dumps(result), flush=True)
+    print('Saved LR and evaluation.json; existing RF retained.' if not args.retrain_forest else 'Saved both models and evaluation.json.', flush=True)
 
-# -- 6. Logistic Regression baseline -------------------------------
-print("\n-- Logistic Regression (baseline) --")
-lr_pipe = Pipeline([
-    ("preprocessor", preprocessor),
-    ("classifier", LogisticRegression(max_iter=1000, random_state=42)),
-])
-lr_pipe.fit(X_train, y_train)
-lr_pred = lr_pipe.predict(X_test)
-lr_proba = lr_pipe.predict_proba(X_test)[:, 1]
-print(f"  Accuracy:  {accuracy_score(y_test, lr_pred):.4f}")
-print(f"  F1 (breach): {f1_score(y_test, lr_pred):.4f}")
-print(f"  ROC-AUC:   {roc_auc_score(y_test, lr_proba):.4f}")
 
-# -- 7. Random Forest (primary model) ------------------------------
-print("\n-- Random Forest (primary) --")
-rf_pipe = Pipeline([
-    ("preprocessor", preprocessor),
-    ("classifier", RandomForestClassifier(
-        n_estimators=150,
-        max_depth=12,
-        min_samples_leaf=5,
-        random_state=42,
-        n_jobs=-1,
-        class_weight='balanced',  # Handle class imbalance
-    )),
-])
-rf_pipe.fit(X_train, y_train)
-rf_pred = rf_pipe.predict(X_test)
-rf_proba = rf_pipe.predict_proba(X_test)[:, 1]
-
-acc = accuracy_score(y_test, rf_pred)
-f1 = f1_score(y_test, rf_pred)
-auc = roc_auc_score(y_test, rf_proba)
-
-print(f"  Accuracy:  {acc:.4f}")
-print(f"  F1 (breach): {f1:.4f}")
-print(f"  ROC-AUC:   {auc:.4f}")
-print(f"\n  Confusion Matrix:\n{confusion_matrix(y_test, rf_pred)}")
-print(f"\n  Classification Report:\n{classification_report(y_test, rf_pred)}")
-
-# -- 7b. Cross-validation for robustness ----------------------------
-print("\n-- 5-Fold Cross-Validation --")
-cv_scores = cross_val_score(rf_pipe, X_train, y_train, cv=5, scoring='roc_auc', n_jobs=-1)
-print(f"  CV ROC-AUC: {cv_scores.mean():.4f} (+/- {cv_scores.std() * 2:.4f})")
-
-# -- 8. Feature importance -----------------------------------------
-print("\n-- Feature Importances (Random Forest) --")
-rf_model = rf_pipe.named_steps["classifier"]
-ohe = rf_pipe.named_steps["preprocessor"].named_transformers_["cat"]
-cat_feature_names = list(ohe.get_feature_names_out(CATEGORICAL_FEATURES))
-all_feature_names = cat_feature_names + NUMERICAL_FEATURES
-importances = rf_model.feature_importances_
-sorted_idx = np.argsort(importances)[::-1]
-for i in sorted_idx:
-    print(f"  {all_feature_names[i]:30s} {importances[i]:.4f}")
-
-# -- 9. Save model with compression --------------------------------
-os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
-joblib.dump(rf_pipe, MODEL_PATH, compress=3)
-print(f"\nModel saved to {MODEL_PATH} ({os.path.getsize(MODEL_PATH) / 1e6:.1f} MB)")
-
-# -- 10. Smoke test ------------------------------------------------
-print("\n-- Smoke test --")
-loaded = joblib.load(MODEL_PATH)
-test_row = pd.DataFrame([{
-    "Attack_Stage": "Reconnaissance", "Company_Size": "Large",
-    "Lateral_Movement": 0, "Privilege_Escalation": 0, "Persistence": 0,
-    "Credential_Stolen": 0, "Data_Exfiltration_GB": 0.0, "Data_Encrypted": 0,
-    "Phishing_Click": 0, "Detection_Time_Min": 25, "Response_Time_Min": 10,
-    "Firewall": 1, "MFA": 1, "EDR": 1, "CVSS_Score": 3.0, "Patch_Age_Days": 10,
-}])
-prob = loaded.predict_proba(test_row)[0, 1]
-print(f"  Case A (contained) breach probability: {prob:.4f}")
-
-test_row2 = pd.DataFrame([{
-    "Attack_Stage": "Impact", "Company_Size": "Small",
-    "Lateral_Movement": 1, "Privilege_Escalation": 1, "Persistence": 1,
-    "Credential_Stolen": 1, "Data_Exfiltration_GB": 85.0, "Data_Encrypted": 1,
-    "Phishing_Click": 1, "Detection_Time_Min": 210, "Response_Time_Min": 150,
-    "Firewall": 0, "MFA": 0, "EDR": 0, "CVSS_Score": 9.4, "Patch_Age_Days": 160,
-}])
-prob2 = loaded.predict_proba(test_row2)[0, 1]
-print(f"  Case B (critical) breach probability: {prob2:.4f}")
-
-print("\nDone.")
+if __name__ == '__main__':
+    main()

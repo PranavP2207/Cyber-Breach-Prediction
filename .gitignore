@@ -1,31 +1,46 @@
-# Python
+# Python environments and generated files
 __pycache__/
 *.py[cod]
 *.egg-info/
-dist/
-build/
 .eggs/
 *.egg
+build/
+dist/
 venv/
-.env
+.venv/
+env/
 
-# IDE
+# Local secrets and editor settings
+.env
+.env.*
+!.env.example
 .vscode/
 .idea/
+.codex/
 *.swp
 *.swo
 
-# OS
+# OS files
 .DS_Store
 Thumbs.db
 
-# Streamlit
-.streamlit/
+# Only publish the shared Streamlit theme
+.streamlit/*
+!.streamlit/config.toml
 
-# Docs (internal use only, not needed in repo)
-docs/project_brief.txt
-docs/aiml_lab_poster_16x9.png
-docs/aiml_lab_poster_16x9.pptx
-
-# Temporary / external downloads
+# Local supporting material; preserved on disk
+archive/
+verification/
+video-explainer/
+frontend/
+.devcontainer/
+node_modules/
 claude files updated/
+current-state.md
+decisions.md
+instructions.md
+known-issues.md
+
+# Publish the standalone guide, not report/video drafts or render artifacts
+/docs/*
+!/docs/project-guide.html
